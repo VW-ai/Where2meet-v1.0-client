@@ -1,5 +1,5 @@
 # Robots.txt for Where2Meet
-# https://where2meet.com/robots.txt
+# https://where2meet.org/robots.txt
 
 # Allow all crawlers by default
 User-agent: *

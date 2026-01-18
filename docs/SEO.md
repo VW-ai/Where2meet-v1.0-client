@@ -1,964 +1,553 @@
-# SEO Implementation Guide - Where2Meet
+# SEO Standard Operating Procedure (SOP) - Where2Meet
 
-## Overview
+> **Last Updated:** 2026-01-06
+> **Version:** 2.0.0
+> **Purpose:** Reference guide for all SEO implementations and maintenance procedures
 
-Where2Meet has been optimized for search engines with comprehensive SEO implementation targeting meeting planner keywords. This document describes the SEO architecture, configuration, and maintenance guidelines.
+---
+
+## Quick Reference
+
+| Item          | Status                   | Location                    |
+| ------------- | ------------------------ | --------------------------- |
+| Site URL      | `https://where2meet.org` | `.env`                      |
+| Sitemap       | `/sitemap.xml`           | `src/app/sitemap.ts`        |
+| Robots        | `/robots.txt`            | `public/robots.txt`         |
+| SEO Utilities | Core library             | `src/lib/seo/`              |
+| Analytics     | GA4 Ready                | `src/components/analytics/` |
 
 ---
 
 ## Table of Contents
 
-1. [SEO Strategy](#seo-strategy)
-2. [Configuration](#configuration)
-3. [Implementation Details](#implementation-details)
-4. [Google Analytics Setup](#google-analytics-setup)
-5. [Asset Requirements](#asset-requirements)
-6. [Testing & Verification](#testing--verification)
-7. [Maintenance](#maintenance)
-8. [Expected Outcomes](#expected-outcomes)
+1. [Site Configuration](#1-site-configuration)
+2. [Page Indexing Strategy](#2-page-indexing-strategy)
+3. [SEO Files Inventory](#3-seo-files-inventory)
+4. [Metadata Implementation](#4-metadata-implementation)
+5. [Structured Data (JSON-LD)](#5-structured-data-json-ld)
+6. [Favicon & Icons](#6-favicon--icons)
+7. [Content Pages](#7-content-pages)
+8. [Keywords Strategy](#8-keywords-strategy)
+9. [Analytics Setup](#9-analytics-setup)
+10. [Maintenance Checklist](#10-maintenance-checklist)
+11. [Troubleshooting](#11-troubleshooting)
 
 ---
 
-## SEO Strategy
+## 1. Site Configuration
 
-### Target Keywords
+### Core Settings
 
-**Primary Keywords (Landing Page):**
-
-- "meeting spot finder" (primary focus)
-- "group meeting planner"
-- "find meeting location"
-- "central meeting point calculator"
-- "where to meet friends"
-
-**Supporting Keywords:**
-
-- "compare travel times"
-- "fair meeting location"
-- "visual meeting planning"
-- "optimal meeting venue finder"
-
-### Page Indexing Strategy
-
-| Page Type                  | Index Strategy           | Rationale                                     |
-| -------------------------- | ------------------------ | --------------------------------------------- |
-| Landing Page (/)           | ✅ Index + Follow        | Main SEO target for organic traffic           |
-| Meeting Pages (/meet/[id]) | ❌ NoIndex + ✅ Follow   | Prevents spam, enables social sharing OG tags |
-| Dashboard (/dashboard)     | ❌ NoIndex + ❌ NoFollow | Private user data, security                   |
-| Auth Pages (/auth/\*)      | ❌ NoIndex + ❌ NoFollow | Private pages, no SEO value                   |
-
-#### Meeting Page Strategy (Critical)
-
-Meeting pages use a special **noindex/follow** strategy:
-
-```typescript
-robots: {
-  index: false, // Don't rank these pages
-  follow: true, // Allow crawling for Open Graph
-}
-```
-
-**Why?**
-
-- **noindex:** Prevents low-quality spam event pages from diluting site authority
-- **follow:** Allows Google to crawl and cache Open Graph tags for perfect social sharing
-- **Result:** Shared meeting links look beautiful on social media while keeping private/temporary events out of search results
-
----
-
-## Configuration
-
-### Site Configuration
-
-Location: `/src/lib/seo/metadata.ts`
-
-```typescript
-export const SITE_CONFIG = {
-  name: 'Where2Meet',
-  url: process.env.NEXT_PUBLIC_APP_URL || 'https://where2meet.com',
-  description:
-    'Find the perfect meeting spot for everyone. Compare travel times, visualize locations on a map, and discover ideal venues for your group meetings.',
-  keywords: [
-    'meeting spot finder',
-    'group meeting planner',
-    'find meeting location',
-    'central meeting point calculator',
-    'where to meet friends',
-    'compare travel times',
-    'fair meeting location',
-    'visual meeting planning',
-    'optimal meeting venue finder',
-  ] as string[],
-  author: 'Where2Meet',
-  locale: 'en_US',
-  themeColor: '#FF6B6B', // coral-500
-};
-```
+| Setting     | Value                    | File                      |
+| ----------- | ------------------------ | ------------------------- |
+| Site Name   | `Where2Meet`             | `src/lib/seo/metadata.ts` |
+| Site URL    | `https://where2meet.org` | `NEXT_PUBLIC_APP_URL`     |
+| Locale      | `en_US`                  | `src/lib/seo/metadata.ts` |
+| Theme Color | `#FF6B6B` (coral-500)    | `src/lib/seo/metadata.ts` |
+| Author      | `Where2Meet`             | `src/lib/seo/metadata.ts` |
 
 ### Environment Variables
 
-Add to `.env.local`:
-
-```bash
-# App URL (required)
-NEXT_PUBLIC_APP_URL=https://where2meet.com
-
-# Google Analytics 4 Measurement ID (optional)
-NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
-```
+| Variable                        | Purpose                            | Required |
+| ------------------------------- | ---------------------------------- | -------- |
+| `NEXT_PUBLIC_APP_URL`           | Production URL for canonical links | Yes      |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4 tracking        | Optional |
 
 ---
 
-## Implementation Details
+## 2. Page Indexing Strategy
 
-### 1. Root Layout (`/src/app/layout.tsx`)
+### Indexing Rules by Page Type
 
-**Features:**
+| Page Type      | Route               | Index | Follow | Sitemap | Rationale                      |
+| -------------- | ------------------- | ----- | ------ | ------- | ------------------------------ |
+| Landing Page   | `/`                 | Yes   | Yes    | Yes     | Main SEO target                |
+| How It Works   | `/how-it-works`     | Yes   | Yes    | Yes     | Feature explanation            |
+| FAQ            | `/faq`              | Yes   | Yes    | Yes     | Keyword-rich content           |
+| Contact        | `/contact`          | Yes   | Yes    | Yes     | Trust signal                   |
+| Scenarios Hub  | `/scenarios`        | Yes   | Yes    | Yes     | Category page                  |
+| Scenario Pages | `/scenarios/[slug]` | Yes   | Yes    | Yes     | Long-tail keywords             |
+| Meeting Pages  | `/meet/[id]`        | No    | Yes    | No      | User-generated, allow OG crawl |
+| Dashboard      | `/dashboard/*`      | No    | No     | No      | Private user data              |
+| Auth Pages     | `/auth/*`           | No    | No     | No      | No SEO value                   |
+| API Routes     | `/api/*`            | No    | No     | No      | Not for crawling               |
 
-- Comprehensive Open Graph & Twitter Card metadata
-- Organization schema (JSON-LD)
-- Google Analytics 4 integration
-- Theme color and viewport configuration
-
-**Key Metadata:**
-
-```typescript
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_CONFIG.url),
-  title: {
-    default: 'Where2Meet - Meeting Spot Finder & Group Planner',
-    template: '%s | Where2Meet',
-  },
-  description: SITE_CONFIG.description,
-  keywords: SITE_CONFIG.keywords,
-  openGraph: {
-    /* ... */
-  },
-  twitter: {
-    /* ... */
-  },
-  robots: {
-    /* ... */
-  },
-};
-```
-
-### 2. Landing Page (`/src/app/(landing)/layout.tsx`)
-
-**Features:**
-
-- Keyword-optimized metadata
-- WebSite schema (JSON-LD)
-- Landing-specific Open Graph image
-
-**SEO Content:**
+### Meeting Page Strategy (Critical)
 
 ```typescript
-export const metadata: Metadata = createMetadata({
-  title: 'Find the Perfect Meeting Spot for Your Group',
-  description:
-    'Where2Meet helps you find fair meeting locations by comparing travel times for all participants. Visualize routes, discover venues, and plan better group meetings with our smart meeting spot finder.',
-  keywords: [
-    /* expanded keyword list */
-  ],
-  image: '/og-landing.png',
-  canonical: '/',
-});
-```
-
-**Semantic HTML:**
-
-- `<section aria-label="Features">` for feature cards
-- `<article>` for individual feature items
-- `aria-hidden="true"` for decorative emojis
-
-### 3. Meeting Pages (`/src/app/meet/[id]/layout.tsx`)
-
-**Features:**
-
-- Dynamic metadata based on event data
-- noindex/follow strategy for social sharing
-- Fallback metadata for error cases
-
-**Dynamic Metadata:**
-
-```typescript
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> {
-  try {
-    const { id } = await params;
-    const event = await eventClient.get(id);
-
-    // Generate dynamic title/description
-    return createMeetingMetadata({
-      title: `${event.title} - Meeting Planner`,
-      description: `Join the meeting "${event.title}"...`,
-      canonical: `/meet/${id}`,
-    });
-  } catch (error) {
-    return createMeetingMetadata({
-      /* fallback */
-    });
-  }
+// noindex + follow = Social sharing works, no spam in search results
+robots: {
+  index: false,  // Don't rank user-generated pages
+  follow: true,  // Allow crawling for Open Graph tags
 }
 ```
 
-**Critical h1 Tag:**
-Location: `/src/features/meeting/ui/header/index.tsx`
+**Why this approach?**
 
-```typescript
-export function Header({ eventId }: HeaderProps) {
-  const { currentEvent } = useMeetingStore();
+- Prevents low-quality spam pages from diluting site authority
+- Allows Google to crawl and cache OG tags for beautiful social previews
+- Keeps SEO power concentrated on landing/feature pages
 
-  return (
-    <header>
-      {/* SEO: Hidden h1 with event title for search engines */}
-      <h1 className="sr-only">{currentEvent?.title || 'Meeting Event'}</h1>
-      {/* ... */}
-    </header>
-  );
-}
-```
+---
 
-### 4. Private Pages (Dashboard & Auth)
+## 3. SEO Files Inventory
 
-**Dashboard (`/src/app/dashboard/layout.tsx`):**
+### Core SEO Library (`src/lib/seo/`)
 
-```typescript
-export const metadata: Metadata = createMetadata({
-  title: 'Dashboard',
-  description: 'Manage your Where2Meet events and settings',
-  noIndex: true, // Prevent indexing
-});
-```
+| File                  | Purpose                     | Key Exports                                                                                 |
+| --------------------- | --------------------------- | ------------------------------------------------------------------------------------------- |
+| `metadata.ts`         | SEO utilities & site config | `SITE_CONFIG`, `createMetadata()`, `createMeetingPageMetadata()`, `createArticleMetadata()` |
+| `structured-data.ts`  | JSON-LD schema generators   | `organizationSchema()`, `websiteSchema()`, `eventSchema()`, `faqPageSchema()`               |
+| `content-registry.ts` | Content freshness tracking  | `getPageLastUpdated()`, `getStalePages()`                                                   |
+| `types/content.ts`    | TypeScript definitions      | Content metadata types, update frequency enum                                               |
 
-**Auth Pages (`/src/app/auth/layout.tsx`):**
+### Static Files
 
-```typescript
-export const metadata: Metadata = createMetadata({
-  title: 'Authentication',
-  description: 'Sign in or create an account on Where2Meet',
-  noIndex: true,
-});
-```
+| File          | Location              | Purpose             |
+| ------------- | --------------------- | ------------------- |
+| `robots.txt`  | `public/robots.txt`   | Crawler directives  |
+| `sitemap.ts`  | `src/app/sitemap.ts`  | Dynamic XML sitemap |
+| `manifest.ts` | `src/app/manifest.ts` | PWA manifest        |
 
-### 5. Static SEO Files
+### Layout Files with Metadata
 
-**robots.txt (`/public/robots.txt`):**
+| File                                          | Metadata Type                             |
+| --------------------------------------------- | ----------------------------------------- |
+| `src/app/layout.tsx`                          | Root metadata, Organization schema        |
+| `src/app/(landing)/layout.tsx`                | Landing page metadata, WebSite schema     |
+| `src/app/(landing)/how-it-works/page.tsx`     | Feature page metadata                     |
+| `src/app/(landing)/faq/page.tsx`              | FAQ metadata, FAQPage schema              |
+| `src/app/(landing)/contact/page.tsx`          | Contact page metadata                     |
+| `src/app/(landing)/scenarios/page.tsx`        | Scenarios hub metadata                    |
+| `src/app/(landing)/scenarios/[slug]/page.tsx` | Dynamic scenario metadata, FAQPage schema |
+| `src/app/meet/[id]/layout.tsx`                | Dynamic meeting metadata (noindex)        |
+| `src/app/dashboard/layout.tsx`                | Dashboard metadata (noindex)              |
+| `src/app/auth/layout.tsx`                     | Auth metadata (noindex)                   |
 
-```txt
-User-agent: *
-Allow: /
+---
 
-# Disallow private pages
-Disallow: /dashboard
-Disallow: /dashboard/*
-Disallow: /auth/
-Disallow: /api/
+## 4. Metadata Implementation
 
-Sitemap: https://where2meet.com/sitemap.xml
-Crawl-delay: 1
-```
+### Metadata Preset Functions
 
-**Sitemap (`/src/app/sitemap.ts`):**
+| Function                      | Use Case           | Key Features                            |
+| ----------------------------- | ------------------ | --------------------------------------- |
+| `createMetadata()`            | General pages      | Title, description, canonical, OG       |
+| `createMeetingPageMetadata()` | `/meet/[id]` pages | noindex/follow, dynamic titles          |
+| `createArticleMetadata()`     | Scenarios, blog    | publishedTime, modifiedTime, article OG |
+| `createFeaturePageMetadata()` | Feature pages      | Feature-specific keywords               |
 
-```typescript
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://where2meet.com';
+### Default Metadata (Root Layout)
 
-  return [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 1.0,
-    },
-  ];
-}
-```
+| Property       | Value                                         |
+| -------------- | --------------------------------------------- |
+| Title Template | `%s \| Where2Meet – Fair Meeting Planner`     |
+| Default Title  | `Where2Meet – Fair Meeting Planner`           |
+| Description    | Find the perfect meeting spot for everyone... |
+| OG Type        | `website`                                     |
+| Twitter Card   | `summary_large_image`                         |
 
-**Note:** Meeting pages (`/meet/[id]`) are intentionally excluded from sitemap because:
+### Open Graph Configuration
 
-- User-generated, mostly private/temporary
-- Have noindex directive
-- Would expose private event IDs
-- Discovered through shared links instead
+| Property         | Default Value    | Override Location       |
+| ---------------- | ---------------- | ----------------------- |
+| `og:title`       | Page title       | Per-page metadata       |
+| `og:description` | Page description | Per-page metadata       |
+| `og:image`       | `/og-image.png`  | Per-page metadata       |
+| `og:type`        | `website`        | `article` for scenarios |
+| `og:locale`      | `en_US`          | `SITE_CONFIG`           |
+| `og:site_name`   | `Where2Meet`     | `SITE_CONFIG`           |
 
-### 6. Structured Data (JSON-LD)
+### Social Sharing Images
 
-**Organization Schema** (Root Layout):
+| Image                | Size       | Purpose               | Status                      |
+| -------------------- | ---------- | --------------------- | --------------------------- |
+| `/og-image.png`      | 1200x630px | Default Open Graph    | Implemented (dynamic route) |
+| `/og-landing.png`    | 1200x630px | Landing page specific | Implemented (dynamic route) |
+| `/twitter-image.png` | 1200x600px | Twitter Card          | Implemented (dynamic route) |
+
+---
+
+## 5. Structured Data (JSON-LD)
+
+### Implemented Schemas
+
+| Schema Type  | Location             | Purpose                      |
+| ------------ | -------------------- | ---------------------------- |
+| Organization | Root layout          | Brand identity, rich results |
+| WebSite      | Landing layout       | Site-wide search features    |
+| Event        | Meeting pages        | Event rich results (minimal) |
+| FAQPage      | FAQ + Scenario pages | FAQ rich results             |
+
+### Organization Schema
 
 ```json
 {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "Where2Meet",
-  "url": "https://where2meet.com",
-  "logo": "https://where2meet.com/logo.png",
-  "description": "Find the perfect meeting spot for everyone"
+  "url": "https://where2meet.org",
+  "logo": "https://where2meet.org/logo.png",
+  "description": "Find the perfect meeting spot for everyone",
+  "foundingDate": "2024"
 }
 ```
 
-**WebSite Schema** (Landing Page):
+### FAQPage Schema Usage
 
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "Where2Meet",
-  "url": "https://where2meet.com",
-  "description": "Find the perfect meeting spot for everyone"
+| Page                | Questions        | Implementation             |
+| ------------------- | ---------------- | -------------------------- |
+| `/faq`              | 20+ questions    | Static FAQ data            |
+| `/scenarios/[slug]` | 3-5 per scenario | Dynamic from scenario data |
+
+### Event Schema (Conservative Approach)
+
+Only use minimal fields to avoid Google warnings:
+
+- `name` (required)
+- `startDate` (required)
+- `organizer` (required)
+- Skip: `location`, `offers`, `eventStatus` unless confirmed
+
+---
+
+## 6. Favicon & Icons
+
+### Asset Inventory
+
+| File                   | Size    | Purpose          | Status      |
+| ---------------------- | ------- | ---------------- | ----------- |
+| `favicon.ico`          | 48x48   | Browser favicon  | Implemented |
+| `favicon-16.png`       | 16x16   | Small favicon    | Implemented |
+| `favicon-32.png`       | 32x32   | Standard favicon | Implemented |
+| `favicon-48.png`       | 48x48   | Large favicon    | Implemented |
+| `apple-touch-icon.png` | 180x180 | Apple devices    | Implemented |
+| `icon-192.png`         | 192x192 | PWA icon         | Implemented |
+| `icon-512.png`         | 512x512 | PWA splash       | Implemented |
+
+### Icon Configuration (Root Layout)
+
+```typescript
+icons: {
+  icon: [
+    { url: '/favicon.ico', sizes: '48x48' },
+    { url: '/favicon-16.png', sizes: '16x16', type: 'image/png' },
+    { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+    { url: '/favicon-48.png', sizes: '48x48', type: 'image/png' },
+  ],
+  apple: [
+    { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+  ],
 }
 ```
 
-**Event Schema** (Meeting Pages - OPTIONAL):
-⚠️ Event schema is **NOT currently implemented** for meeting pages. Use conservatively:
+---
 
-- Only for public, ticketed events with confirmed venues
-- OR use minimal fields only: name, startDate, organizer
-- Rich Results are a bonus, not critical for SEO success
-- Focus on Open Graph and h1 tags instead
+## 7. Content Pages
 
-### 7. Web App Manifest (`/src/app/manifest.ts`)
+### Scenario Pages (SEO-Optimized)
 
-PWA-like appearance with:
+| Slug                             | Target Keyword           | Priority |
+| -------------------------------- | ------------------------ | -------- |
+| `friends-group-dinner-spot`      | group dinner planning    | 0.7      |
+| `date-night-equal-distance`      | fair date location       | 0.7      |
+| `coworkers-lunch-spot`           | work lunch meeting spot  | 0.7      |
+| `group-weekend-hangout`          | weekend hangout planning | 0.7      |
+| `family-reunion-location-finder` | family reunion location  | 0.7      |
+| `remote-team-offsite-planning`   | team offsite planning    | 0.7      |
+| `cross-city-client-meetings`     | client meeting location  | 0.7      |
+| `long-distance-friends-reunion`  | long distance meetup     | 0.7      |
 
-- Add to home screen capability
-- Theme colors
-- App icons configuration
+### Scenario Page Structure
+
+Each scenario page includes:
+| Section | Purpose |
+|---------|---------|
+| Hero | Headline + CTA |
+| Problem | Pain point identification |
+| Solution | How Where2Meet helps |
+| Step-by-Step | Usage guide |
+| Best Practices | Tips and advice |
+| FAQ | 3-5 questions (FAQPage schema) |
+| Related Scenarios | Internal linking |
+| CTA | Conversion action |
+
+### Feature Pages
+
+| Page          | Route           | h1                                                | Priority |
+| ------------- | --------------- | ------------------------------------------------- | -------- |
+| Landing       | `/`             | Find Fair Meeting Spots with Equal Travel Times   | 1.0      |
+| How It Works  | `/how-it-works` | How Where2Meet Finds the Fairest Meeting Location | 0.8      |
+| FAQ           | `/faq`          | Where2Meet FAQ – Fair Meeting Locations Explained | 0.8      |
+| Contact       | `/contact`      | Contact Where2Meet                                | 0.8      |
+| Scenarios Hub | `/scenarios`    | Fair Meeting Scenarios - Where2Meet Use Cases     | 0.8      |
 
 ---
 
-## Google Analytics Setup
+## 8. Keywords Strategy
 
-### 1. Create GA4 Property
+### Keyword Categories
 
-1. Visit https://analytics.google.com
-2. Create new GA4 property for Where2Meet
-3. Get Measurement ID (format: `G-XXXXXXXXXX`)
+| Category        | Keywords                                                          | Usage                 |
+| --------------- | ----------------------------------------------------------------- | --------------------- |
+| Core            | meeting spot finder, group meeting planner, find meeting location | All pages             |
+| Differentiation | fair meeting location, equal travel time, midpoint meeting        | Landing, How It Works |
+| AI/Smart        | AI meeting planner, smart meeting finder, optimal meeting point   | Feature pages         |
+| Features        | compare travel times, visual meeting planning, venue finder       | Feature pages         |
 
-### 2. Configure Environment
+### Primary Target Keywords
 
-Add to `.env.local`:
+| Keyword                          | Target Page  | Competition |
+| -------------------------------- | ------------ | ----------- |
+| meeting spot finder              | Landing      | Medium      |
+| group meeting planner            | Landing      | Medium      |
+| fair meeting location            | How It Works | Low         |
+| central meeting point calculator | Landing      | Low         |
+| where to meet friends            | Scenarios    | Medium      |
+
+### Long-Tail Keywords (Scenarios)
+
+| Keyword                         | Target Page                    |
+| ------------------------------- | ------------------------------ |
+| where to meet for group dinner  | friends-group-dinner-spot      |
+| equal distance date spot        | date-night-equal-distance      |
+| coworker lunch meeting location | coworkers-lunch-spot           |
+| family reunion location finder  | family-reunion-location-finder |
+| remote team offsite planning    | remote-team-offsite-planning   |
+
+---
+
+## 9. Analytics Setup
+
+### Google Analytics 4
+
+| Item          | Value                                           |
+| ------------- | ----------------------------------------------- |
+| Component     | `src/components/analytics/google-analytics.tsx` |
+| Env Variable  | `NEXT_PUBLIC_GA_MEASUREMENT_ID`                 |
+| Load Strategy | `afterInteractive`                              |
+| Tracking      | Automatic pageviews                             |
+
+### Custom Events (`src/lib/analytics/events.ts`)
+
+| Event            | Trigger           |
+| ---------------- | ----------------- |
+| `createEvent`    | Meeting created   |
+| `joinEvent`      | Participant joins |
+| `addLocation`    | Location added    |
+| `voteVenue`      | Venue voted       |
+| `publishMeeting` | Meeting finalized |
+| `shareEvent`     | Link shared       |
+
+### Setup Steps
+
+1. Create GA4 property at https://analytics.google.com
+2. Get Measurement ID (format: `G-XXXXXXXXXX`)
+3. Add to `.env.local`: `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX`
+4. Deploy - tracking starts automatically
+
+---
+
+## 10. Maintenance Checklist
+
+### Weekly Tasks
+
+| Task               | Tool           | Action                 |
+| ------------------ | -------------- | ---------------------- |
+| Check crawl errors | Search Console | Fix any 4xx/5xx errors |
+| Review analytics   | GA4            | Monitor traffic trends |
+
+### Monthly Tasks
+
+| Task                | Tool                 | Action                                 |
+| ------------------- | -------------------- | -------------------------------------- |
+| SEO audit           | Lighthouse           | Run `lighthouse --only-categories=seo` |
+| Keyword rankings    | Search Console       | Track position changes                 |
+| Content freshness   | Content Registry     | Check `getStalePages()`                |
+| Social sharing test | FB/Twitter debuggers | Verify OG previews                     |
+
+### Quarterly Tasks
+
+| Task                    | Tool                | Action                     |
+| ----------------------- | ------------------- | -------------------------- |
+| Full SEO audit          | Lighthouse + manual | Score target: 90+          |
+| Keyword research        | Search Console      | Identify new opportunities |
+| Competitor analysis     | Manual              | Review competitor SEO      |
+| Meta description review | Manual              | Update stale descriptions  |
+
+### Annual Tasks
+
+| Task                    | Action                    |
+| ----------------------- | ------------------------- |
+| Comprehensive audit     | Full technical SEO review |
+| Schema.org updates      | Check for spec changes    |
+| Image refresh           | Update OG/social images   |
+| Content strategy review | Plan new scenario pages   |
+
+---
+
+## 11. Troubleshooting
+
+### Common Issues
+
+| Issue                | Diagnosis                         | Solution                                        |
+| -------------------- | --------------------------------- | ----------------------------------------------- |
+| Page not indexed     | Check robots meta, Search Console | Ensure `index: true`, request indexing          |
+| OG image not showing | Test with FB debugger             | Verify image exists, correct size, absolute URL |
+| Missing from sitemap | Check `src/app/sitemap.ts`        | Add URL entry with priority                     |
+| Lighthouse score low | Run Lighthouse audit              | Fix specific issues in report                   |
+| GA4 not tracking     | Check env var, ad blockers        | Verify `NEXT_PUBLIC_GA_MEASUREMENT_ID` set      |
+
+### Verification Commands
 
 ```bash
-NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+# Check robots.txt
+curl https://where2meet.org/robots.txt
+
+# Check sitemap
+curl https://where2meet.org/sitemap.xml
+
+# Check OG image
+curl -I https://where2meet.org/og-image.png
+
+# Run Lighthouse SEO audit
+lighthouse https://where2meet.org --only-categories=seo
 ```
 
-### 3. Implementation
+### Testing Tools
 
-**Component:** `/src/components/analytics/google-analytics.tsx`
+| Tool                  | URL                                    | Purpose                    |
+| --------------------- | -------------------------------------- | -------------------------- |
+| Google Search Console | search.google.com/search-console       | Indexing, errors, rankings |
+| Facebook Debugger     | developers.facebook.com/tools/debug    | OG tag preview             |
+| Twitter Validator     | cards-validator.twitter.com            | Twitter Card preview       |
+| Rich Results Test     | search.google.com/test/rich-results    | Schema validation          |
+| Mobile-Friendly Test  | search.google.com/test/mobile-friendly | Mobile SEO                 |
+| PageSpeed Insights    | pagespeed.web.dev                      | Performance + SEO          |
 
-- Uses Next.js Script component for optimization
-- `strategy="afterInteractive"` for non-blocking load
-- Tracks page views automatically
-- Conditional rendering (only loads if env var is set)
+---
 
-**Integration:** Automatically loaded in root layout if `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set.
+## Appendix A: Adding New Pages
 
-### 4. Custom Event Tracking (Optional)
+### Standard Page Checklist
 
-Location: `/src/lib/analytics/events.ts`
+| Step | Action                                                    |
+| ---- | --------------------------------------------------------- |
+| 1    | Create page with `createMetadata()` or appropriate preset |
+| 2    | Set proper `title`, `description`, `canonical`            |
+| 3    | Add h1 tag with target keyword                            |
+| 4    | Add to sitemap if indexable                               |
+| 5    | Add JSON-LD schema if applicable                          |
+| 6    | Test with Lighthouse                                      |
 
-**Available Events:**
+### Example: New Feature Page
 
 ```typescript
-import { analyticsEvents } from '@/lib/analytics/events';
-
-// Track event creation
-analyticsEvents.createEvent(eventId);
-
-// Track participant joins
-analyticsEvents.joinEvent(eventId, participantId);
-
-// Track location additions
-analyticsEvents.addLocation(eventId, address);
-
-// Track venue votes
-analyticsEvents.voteVenue(eventId, venueId, 'up' | 'down');
-
-// Track meeting publish
-analyticsEvents.publishMeeting(eventId, venueId);
-
-// Track event sharing
-analyticsEvents.shareEvent(eventId, 'link' | 'social');
-```
-
-**Integration Points:**
-
-- Landing page: after event creation
-- Meeting page: participant joins, location adds, votes
-- Share modal: link copied, social share
-
----
-
-## Asset Requirements
-
-### Social Sharing Images
-
-Create these images for optimal social sharing:
-
-| File                        | Size       | Purpose                  |
-| --------------------------- | ---------- | ------------------------ |
-| `/public/og-image.png`      | 1200×630px | Default Open Graph image |
-| `/public/og-landing.png`    | 1200×630px | Landing page specific    |
-| `/public/twitter-image.png` | 1200×600px | Twitter Card image       |
-
-**Design Guidelines:**
-
-- Include Where2Meet logo + cat mascot
-- Tagline: "Find the Perfect Meeting Spot"
-- Visual: Map with location pins
-- Brand color: Coral (#FF6B6B)
-- High contrast text for readability
-
-### App Icons
-
-| File                           | Size         | Purpose         |
-| ------------------------------ | ------------ | --------------- |
-| `/public/favicon.ico`          | 32×32, 16×16 | Browser favicon |
-| `/public/apple-touch-icon.png` | 180×180      | Apple devices   |
-| `/public/icon-192.png`         | 192×192      | PWA manifest    |
-| `/public/icon-512.png`         | 512×512      | PWA manifest    |
-
----
-
-## Testing & Verification
-
-### Pre-Deployment Checklist
-
-- [ ] **Environment Variables**
-  - [ ] `NEXT_PUBLIC_APP_URL` set to production URL
-  - [ ] `NEXT_PUBLIC_GA_MEASUREMENT_ID` configured (if using analytics)
-
-- [ ] **Visual Assets Created**
-  - [ ] `/public/og-image.png`
-  - [ ] `/public/og-landing.png`
-  - [ ] `/public/twitter-image.png`
-  - [ ] `/public/favicon.ico`
-  - [ ] `/public/apple-touch-icon.png`
-  - [ ] `/public/icon-192.png` & `/public/icon-512.png`
-
-- [ ] **Static Files Accessible**
-  - [ ] `https://where2meet.com/robots.txt`
-  - [ ] `https://where2meet.com/sitemap.xml`
-  - [ ] `https://where2meet.com/manifest.webmanifest`
-
-### Post-Deployment Verification
-
-#### 1. Metadata Verification
-
-View page source for each route type:
-
-**Landing Page:**
-
-```bash
-curl https://where2meet.com | grep -A 10 "<meta"
-```
-
-Check for:
-
-- `<title>Where2Meet - Meeting Spot Finder & Group Planner</title>`
-- `<meta name="description" content="...">`
-- `<meta property="og:title" content="...">` (Open Graph)
-- `<meta name="twitter:card" content="summary_large_image">`
-- `<script type="application/ld+json">` (Organization schema)
-
-**Meeting Page:**
-
-```bash
-curl https://where2meet.com/meet/abc123 | grep "robots"
-```
-
-Check for:
-
-- `<meta name="robots" content="noindex, follow">`
-- Dynamic title with event name
-- Open Graph tags with event details
-
-**Dashboard/Auth Pages:**
-
-```bash
-curl https://where2meet.com/dashboard | grep "robots"
-```
-
-Check for:
-
-- `<meta name="robots" content="noindex, nofollow">`
-
-#### 2. Social Sharing Tests
-
-**Facebook Debugger:**
-https://developers.facebook.com/tools/debug/
-
-- Test landing page URL
-- Test a meeting page URL
-- Verify images load correctly
-- Check title and description
-
-**Twitter Card Validator:**
-https://cards-validator.twitter.com/
-
-- Test landing page URL
-- Verify "summary_large_image" card appears
-- Check image, title, description
-
-**LinkedIn Post Inspector:**
-https://www.linkedin.com/post-inspector/
-
-#### 3. Structured Data Validation
-
-**Google Rich Results Test:**
-https://search.google.com/test/rich-results
-
-Test landing page for:
-
-- ✅ Organization schema
-- ✅ WebSite schema
-
-**Schema.org Validator:**
-https://validator.schema.org/
-
-Paste page source and verify schemas are valid.
-
-#### 4. Lighthouse SEO Audit
-
-```bash
-# Install Lighthouse CLI
-npm install -g lighthouse
-
-# Run SEO audit
-lighthouse https://where2meet.com --only-categories=seo --output=html --output-path=./seo-audit.html
-```
-
-**Target Score:** 90+
-
-**Key Metrics:**
-
-- ✅ Page has a `<title>` element
-- ✅ Document has a `<meta name="description">`
-- ✅ Links have descriptive text
-- ✅ Page has successful HTTP status code
-- ✅ Document has a valid `hreflang`
-- ✅ Page has valid robots.txt
-- ✅ Image elements have `[alt]` attributes
-
-#### 5. Mobile-Friendliness Test
-
-https://search.google.com/test/mobile-friendly
-
-Verify:
-
-- ✅ Page is mobile-friendly
-- ✅ Text is readable without zooming
-- ✅ Content fits screen
-- ✅ Links are not too close together
-
----
-
-## Google Search Console Setup
-
-### 1. Add Property
-
-1. Visit https://search.google.com/search-console
-2. Click "Add Property"
-3. Enter `https://where2meet.com`
-4. Choose verification method: **HTML tag**
-
-### 2. Verify Ownership
-
-Add verification meta tag to `/src/app/layout.tsx`:
-
-```typescript
-export const metadata: Metadata = {
-  // ... existing metadata
-  verification: {
-    google: 'YOUR_VERIFICATION_CODE_HERE',
-  },
-};
-```
-
-### 3. Submit Sitemap
-
-1. In Search Console, go to "Sitemaps"
-2. Add new sitemap: `https://where2meet.com/sitemap.xml`
-3. Submit
-
-### 4. Monitor
-
-**Check these sections regularly:**
-
-- **Coverage:** Ensure landing page is indexed
-- **Enhancements:** Check for structured data issues
-- **Performance:** Monitor search queries and CTR
-- **Indexing:** Verify noindex pages are excluded
-
-**Expected Indexing:**
-
-- ✅ Indexed: Landing page (`/`)
-- ❌ Excluded: Meeting pages (noindex)
-- ❌ Excluded: Dashboard pages (noindex + disallowed)
-- ❌ Excluded: Auth pages (noindex + disallowed)
-
----
-
-## Maintenance
-
-### Regular Tasks
-
-**Monthly:**
-
-- [ ] Review Search Console performance
-- [ ] Check for crawl errors
-- [ ] Monitor keyword rankings
-- [ ] Review GA4 organic traffic data
-
-**Quarterly:**
-
-- [ ] Run Lighthouse SEO audit
-- [ ] Update keywords if needed
-- [ ] Review and update meta descriptions
-- [ ] Check competitor rankings
-
-**Annually:**
-
-- [ ] Comprehensive SEO audit
-- [ ] Update structured data if schema.org changes
-- [ ] Review and refresh social sharing images
-
-### Updating Metadata
-
-To update site-wide metadata, edit `/src/lib/seo/metadata.ts`:
-
-```typescript
-export const SITE_CONFIG = {
-  // Update these values
-  description: 'New description...',
-  keywords: ['new', 'keywords', '...'],
-  // ...
-};
-```
-
-To update page-specific metadata, edit the respective layout file:
-
-- Landing: `/src/app/(landing)/layout.tsx`
-- Meeting: `/src/app/meet/[id]/layout.tsx`
-- Dashboard: `/src/app/dashboard/layout.tsx`
-
-### Adding New Pages
-
-When adding new public pages:
-
-1. **Create layout with metadata:**
-
-```typescript
-// /src/app/new-page/layout.tsx
-import type { Metadata } from 'next';
+// src/app/(landing)/new-feature/page.tsx
 import { createMetadata } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = createMetadata({
-  title: 'Page Title',
-  description: 'Page description...',
-  canonical: '/new-page',
+export const metadata = createMetadata({
+  title: 'New Feature - Keyword Rich Title',
+  description: 'Description with primary keywords (150-160 chars)',
+  canonical: '/new-feature',
+  keywords: ['additional', 'keywords'],
 });
 
-export default function NewPageLayout({ children }) {
-  return children;
+export default function NewFeaturePage() {
+  return (
+    <main>
+      <h1>New Feature Heading</h1>
+      {/* content */}
+    </main>
+  );
 }
 ```
 
-2. **Add to sitemap** (if should be indexed):
+### Update Sitemap
 
 ```typescript
-// /src/app/sitemap.ts
-export default function sitemap() {
-  return [
-    // ... existing entries
-    {
-      url: `${baseUrl}/new-page`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-  ];
+// src/app/sitemap.ts
+{
+  url: `${baseUrl}/new-feature`,
+  lastModified: new Date(),
+  changeFrequency: 'monthly',
+  priority: 0.8,
 }
 ```
 
-3. **Add semantic HTML:**
-
-```typescript
-<main>
-  <h1>Page Heading</h1>
-  <section aria-label="Section Name">
-    {/* content */}
-  </section>
-</main>
-```
-
-### Keyword Optimization
-
-To target new keywords:
-
-1. **Update SITE_CONFIG keywords:**
-
-```typescript
-keywords: [
-  'existing keyword',
-  'new keyword to target',
-  // ...
-];
-```
-
-2. **Update meta descriptions** to naturally include new keywords
-
-3. **Update h1/h2 headings** on landing page if appropriate
-
-4. **Monitor in Search Console** after 2-4 weeks
-
 ---
 
-## Expected Outcomes
+## Appendix B: Files Quick Reference
 
-### Short-term (1-2 months)
+### Must-Know Files
 
-- ✅ All public pages indexed by Google
-- ✅ Proper social media link previews on Twitter/Facebook/LinkedIn
-- ✅ Lighthouse SEO score: 90+
-- ✅ GA4 tracking functional with page views
-- ✅ Rich Results eligible (Organization, WebSite schemas)
+| File                      | Purpose                      |
+| ------------------------- | ---------------------------- |
+| `src/lib/seo/metadata.ts` | All SEO config and utilities |
+| `src/app/sitemap.ts`      | Sitemap generation           |
+| `public/robots.txt`       | Crawler rules                |
+| `src/app/layout.tsx`      | Root metadata                |
 
-**Success Metrics:**
+### Full File Tree
 
-- Landing page appears in Google search results
-- Search Console shows no critical errors
-- Social sharing previews render correctly
-- GA4 tracking user sessions
-
-### Medium-term (3-6 months)
-
-- 📈 Ranking on page 2-3 for "meeting spot finder"
-- 📈 Ranking on page 2-3 for "group meeting planner"
-- 📈 Organic traffic: 100-500 visits/month
-- 📈 Improved CTR from search results
-
-**Success Metrics:**
-
-- 10+ search queries showing impressions in Search Console
-- Avg. position improving (lower is better)
-- Organic sessions in GA4 increasing month-over-month
-
-### Long-term (6-12 months)
-
-- 🎯 Top 10 ranking for primary keywords
-- 🎯 Organic traffic: 1000+ visits/month
-- 🎯 Featured snippets for "how to find meeting spot"
-- 🎯 Brand searches for "Where2Meet"
-
-**Success Metrics:**
-
-- Multiple keywords in top 10 positions
-- Branded search queries appearing
-- High-quality backlinks from relevant sites
-- Strong organic conversion rate
-
----
-
-## Troubleshooting
-
-### Pages Not Being Indexed
-
-**Check:**
-
-1. Search Console Coverage report for errors
-2. `robots.txt` not blocking the page
-3. No `noindex` meta tag on the page
-4. Sitemap includes the URL
-5. Page returns 200 status code
-
-**Solutions:**
-
-- Request indexing in Search Console
-- Check for server errors (500, 404)
-- Verify canonical URL is correct
-
-### Social Sharing Images Not Loading
-
-**Check:**
-
-1. Image files exist in `/public/` directory
-2. Image URLs are absolute (include domain)
-3. Images are the correct size (1200×630 for OG)
-4. Images are publicly accessible
-
-**Debug:**
-
-```bash
-curl -I https://where2meet.com/og-image.png
 ```
+src/
+├── app/
+│   ├── layout.tsx                 # Root metadata + Organization schema
+│   ├── sitemap.ts                 # Dynamic sitemap
+│   ├── manifest.ts                # PWA manifest
+│   ├── (landing)/
+│   │   ├── layout.tsx             # Landing metadata + WebSite schema
+│   │   ├── page.tsx               # Homepage
+│   │   ├── how-it-works/page.tsx  # Feature page
+│   │   ├── faq/page.tsx           # FAQ + FAQPage schema
+│   │   ├── contact/page.tsx       # Contact page
+│   │   └── scenarios/
+│   │       ├── page.tsx           # Scenarios hub
+│   │       └── [slug]/page.tsx    # Dynamic scenarios
+│   ├── meet/[id]/
+│   │   └── layout.tsx             # Meeting metadata (noindex)
+│   ├── dashboard/
+│   │   └── layout.tsx             # Dashboard metadata (noindex)
+│   └── auth/
+│       └── layout.tsx             # Auth metadata (noindex)
+├── lib/seo/
+│   ├── metadata.ts                # Core SEO utilities
+│   ├── structured-data.ts         # JSON-LD generators
+│   ├── content-registry.ts        # Content freshness
+│   └── types/content.ts           # TypeScript types
+└── components/
+    ├── seo/
+    │   └── structured-data.tsx    # Schema injection
+    └── analytics/
+        └── google-analytics.tsx   # GA4 component
 
-Should return `200 OK`.
-
-### Lighthouse Score Below 90
-
-**Common Issues:**
-
-- Missing `alt` attributes on images
-- Missing meta description
-- Links without descriptive text
-- No `hreflang` for internationalization (if applicable)
-
-**Fix:**
-Review Lighthouse report for specific issues and address each one.
-
-### GA4 Not Tracking
-
-**Check:**
-
-1. `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set in production
-2. Environment variable starts with `NEXT_PUBLIC_` (required for client-side)
-3. Ad blockers disabled when testing
-4. Check browser console for errors
-
-**Debug:**
-
-```javascript
-// In browser console
-window.dataLayer;
-// Should show array with events
+public/
+├── robots.txt                     # Crawler directives
+├── favicon.ico                    # Browser favicon
+├── favicon-16.png                 # 16x16 favicon
+├── favicon-32.png                 # 32x32 favicon
+├── favicon-48.png                 # 48x48 favicon
+├── apple-touch-icon.png           # Apple touch icon
+├── icon-192.png                   # PWA icon
+└── icon-512.png                   # PWA splash
 ```
 
 ---
 
-## Architecture Decisions
+## Appendix C: Outstanding Tasks
 
-### Why noindex/follow for Meeting Pages?
-
-**Problem:** Meeting pages are user-generated, often private/temporary, and could dilute site authority with low-quality content.
-
-**Solution:** `robots: { index: false, follow: true }`
-
-**Benefits:**
-
-- ✅ Prevents spam event pages from ranking
-- ✅ Keeps SEO power concentrated on landing page
-- ✅ Google still crawls for Open Graph tags
-- ✅ Shared links render beautifully on social media
-- ✅ No wasted crawl budget on temporary pages
-
-**Future:** When "Public Events" feature is added, change to `index: true` for public events only.
-
-### Why Exclude Meeting Pages from Sitemap?
-
-**Reasons:**
-
-- User-generated content (potentially millions of URLs)
-- Mostly private/temporary events
-- Have noindex directive anyway
-- Would expose private event IDs
-- Search engines discover through shared links
-
-**Alternative:** If "Public Events" feature is added, create a separate dynamic sitemap:
-
-```typescript
-// /src/app/sitemap-events.xml/route.ts
-export async function GET() {
-  const publicEvents = await getPublicEvents();
-  // Generate dynamic sitemap
-}
-```
-
-### Why Conservative Event Schema Approach?
-
-**Issue:** Google may ignore Event schema for non-public events without full details (venue, tickets, etc.).
-
-**Decision:** Skip Event schema for now, focus on Open Graph + h1 tags.
-
-**Rationale:**
-
-- Rich Results are a bonus, not critical for SEO success
-- Missing required fields (venue address, event status) would cause warnings
-- Open Graph provides sufficient metadata for social sharing
-- Can add Event schema later when "Public Events" feature exists
+| Task                                     | Priority | Status  |
+| ---------------------------------------- | -------- | ------- |
+| Create `/og-image.png` (1200x630px)      | High     | Pending |
+| Create `/og-landing.png` (1200x630px)    | High     | Pending |
+| Create `/twitter-image.png` (1200x600px) | High     | Pending |
+| Add Google Search Console verification   | Medium   | Pending |
+| Configure GA4 in production              | Medium   | Pending |
+| Add breadcrumb schema                    | Low      | Future  |
+| Implement hreflang for i18n              | Low      | Future  |
 
 ---
 
-## Files Reference
-
-### Created Files
-
-**SEO Core:**
-
-- `/src/lib/seo/metadata.ts` - SEO utilities and site config
-- `/src/lib/seo/structured-data.ts` - JSON-LD schema generators
-- `/src/components/seo/structured-data.tsx` - Schema injection component
-
-**Analytics:**
-
-- `/src/components/analytics/google-analytics.tsx` - GA4 component
-- `/src/lib/analytics/events.ts` - Custom event tracking
-
-**Static SEO:**
-
-- `/public/robots.txt` - Crawler directives
-- `/src/app/sitemap.ts` - XML sitemap generator
-- `/src/app/manifest.ts` - PWA manifest
-
-**Layouts:**
-
-- `/src/app/(landing)/layout.tsx` - Landing page metadata
-- `/src/app/meet/[id]/layout.tsx` - Meeting page dynamic metadata
-- `/src/app/auth/layout.tsx` - Auth pages noindex
-
-### Modified Files
-
-- `/src/app/layout.tsx` - Enhanced root metadata, GA4, Organization schema
-- `/src/app/dashboard/layout.tsx` - Added noindex
-- `/src/features/meeting/ui/header/index.tsx` - Added h1 tag
-- `/src/app/(landing)/page.tsx` - Semantic HTML
-- `.env.example` - Added GA4 variable
-
----
-
-## Resources
-
-**Documentation:**
-
-- [Next.js Metadata API](https://nextjs.org/docs/app/building-your-application/optimizing/metadata)
-- [Schema.org Documentation](https://schema.org/)
-- [Google Search Central](https://developers.google.com/search)
-- [Open Graph Protocol](https://ogp.me/)
-
-**Tools:**
-
-- [Google Search Console](https://search.google.com/search-console)
-- [Google Analytics 4](https://analytics.google.com)
-- [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/)
-- [Twitter Card Validator](https://cards-validator.twitter.com/)
-- [Google Rich Results Test](https://search.google.com/test/rich-results)
-- [Lighthouse CLI](https://github.com/GoogleChrome/lighthouse)
-
-**Learning:**
-
-- [Moz SEO Learning Center](https://moz.com/learn/seo)
-- [Google SEO Starter Guide](https://developers.google.com/search/docs/beginner/seo-starter-guide)
-- [Next.js SEO Best Practices](https://nextjs.org/learn/seo/introduction-to-seo)
-
----
-
-## Support & Questions
-
-For SEO-related issues or questions:
-
-1. Check [Troubleshooting](#troubleshooting) section
-2. Review Google Search Console for specific errors
-3. Run Lighthouse audit for detailed recommendations
-4. Consult Next.js metadata documentation
-
----
-
-**Last Updated:** 2025-12-28
-**Version:** 1.0.0
-**Maintained By:** Where2Meet Team
+**Document maintained by:** Where2Meet Team
+**Review frequency:** Quarterly

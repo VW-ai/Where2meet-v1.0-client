@@ -6,10 +6,10 @@ import type { Metadata } from 'next';
  */
 export const SITE_CONFIG = {
   name: 'Where2Meet',
-  url: 'https://where2meet.org',
+  url: process.env.NEXT_PUBLIC_APP_URL || 'https://where2meet.org',
   author: 'Where2Meet Team',
   locale: 'en_US',
-  themeColor: '#3b82f6',
+  themeColor: '#FF6B6B',
 
   // Differentiated positioning - emphasizes fairness and travel time comparison
   defaultTitle: 'Where2Meet – Fair Meeting Planner with Travel Time Comparison',

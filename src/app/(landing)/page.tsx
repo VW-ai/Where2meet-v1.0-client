@@ -126,7 +126,7 @@ export default function LandingPage() {
                 priority
               />
             </div>
-            <h1 className="sr-only">Where2Meet</h1>
+            <span className="sr-only">Where2Meet</span>
           </div>
 
           {/* Auth components */}
