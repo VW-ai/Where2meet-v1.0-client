@@ -146,12 +146,8 @@ export default function LandingPage() {
           <div
             className={`mb-12 animate-on-load animate-fade-slide-up animation-delay-200 ${animationLoaded ? 'loaded' : ''}`}
           >
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">
-              Meet Halfway,{' '}
-              <span className="text-coral-500 underline decoration-coral-300 decoration-2 underline-offset-4">
-                Fair & Square
-              </span>
-              .
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 md:whitespace-nowrap">
+              Meet Halfway, Fair & Square.
             </h1>
             <p className="text-lg md:text-xl text-gray-500">
               Don't let distance decide. We calculate real travel times to find the perfect middle
