@@ -1,5 +1,6 @@
 'use client';
 
+import { Sparkles } from 'lucide-react';
 import { Input } from '@/shared/ui/input';
 import { AppointmentPicker } from '@/shared/ui/appointment-picker';
 
@@ -26,6 +27,7 @@ export function HeroInput({
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
           required
+          icon={<Sparkles className="w-5 h-5" />}
           className="text-base"
         />
       </div>

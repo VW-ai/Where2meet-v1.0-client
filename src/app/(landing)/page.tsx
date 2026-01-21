@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { MapPin, Map, Clock } from 'lucide-react';
 import catLogo from '@/components/cat/image.png';
 import { HeroInput } from '@/features/landing/ui/hero-input';
 import { ActionButtons } from '@/features/landing/ui/action-buttons';
@@ -110,8 +111,14 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-coral-50 via-mint-50 to-lavender-50">
-      <header className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-white relative">
+      {/* Geometric grid pattern overlay */}
+      <div
+        className="absolute inset-0 opacity-40 pointer-events-none"
+        style={{ backgroundImage: "url('/grid-pattern.svg')" }}
+      />
+
+      <header className="container mx-auto px-4 py-6 relative">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
@@ -134,30 +141,26 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12 md:py-20">
+      <main className="container mx-auto px-4 py-12 md:py-20 relative">
         <div className="max-w-2xl mx-auto text-center">
           <div
             className={`mb-12 animate-on-load animate-fade-slide-up animation-delay-200 ${animationLoaded ? 'loaded' : ''}`}
           >
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">
-              Find <span className="text-coral-500">Fair Meeting Spots</span> with Equal Travel
-              Times
+              Meet Halfway,{' '}
+              <span className="text-coral-500 underline decoration-coral-300 decoration-2 underline-offset-4">
+                Fair & Square
+              </span>
+              .
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 mb-4">
-              Stop making one person travel twice as far. Compare real travel times and find
-              equitable locations for everyone.
-            </p>
-            <p className="text-sm md:text-base text-gray-500 italic mb-3">
-              Unlike other planners, Where2Meet optimizes for travel time fairness, not just
-              distance
-            </p>
-            <p className="text-base md:text-lg text-coral-600 font-semibold">
-              ✨ No sign-up required—start planning in seconds
+            <p className="text-lg md:text-xl text-gray-500">
+              Don't let distance decide. We calculate real travel times to find the perfect middle
+              ground for everyone.
             </p>
           </div>
 
           <div
-            className={`bg-white rounded-3xl shadow-xl p-8 md:p-12 mb-8 animate-on-load animate-fade-scale-in animation-delay-400 ${animationLoaded ? 'loaded' : ''}`}
+            className={`bg-white/90 backdrop-blur-sm rounded-3xl border border-gray-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-12 mb-8 animate-on-load animate-fade-scale-in animation-delay-400 ${animationLoaded ? 'loaded' : ''}`}
           >
             <HeroInput
               title={title}
@@ -178,11 +181,9 @@ export default function LandingPage() {
             className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left"
           >
             <article
-              className={`bg-white/60 backdrop-blur-sm rounded-2xl p-6 animate-on-load animate-fade-slide-up animation-delay-600 ${animationLoaded ? 'loaded' : ''}`}
+              className={`bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6 animate-on-load animate-fade-slide-up animation-delay-600 ${animationLoaded ? 'loaded' : ''}`}
             >
-              <div className="text-3xl mb-3" aria-hidden="true">
-                📍
-              </div>
+              <MapPin className="w-8 h-8 text-coral-500 mb-3" />
               <h3 className="font-semibold text-gray-900 mb-2">Fair for Everyone</h3>
               <p className="text-sm text-gray-600">
                 Compare travel times and find locations that work for all participants
@@ -190,11 +191,9 @@ export default function LandingPage() {
             </article>
 
             <article
-              className={`bg-white/60 backdrop-blur-sm rounded-2xl p-6 animate-on-load animate-fade-slide-up animation-delay-800 ${animationLoaded ? 'loaded' : ''}`}
+              className={`bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6 animate-on-load animate-fade-slide-up animation-delay-800 ${animationLoaded ? 'loaded' : ''}`}
             >
-              <div className="text-3xl mb-3" aria-hidden="true">
-                🗺️
-              </div>
+              <Map className="w-8 h-8 text-coral-500 mb-3" />
               <h3 className="font-semibold text-gray-900 mb-2">Visual Planning</h3>
               <p className="text-sm text-gray-600">
                 See everyone's locations on a map with travel routes and times
@@ -202,11 +201,9 @@ export default function LandingPage() {
             </article>
 
             <article
-              className={`bg-white/60 backdrop-blur-sm rounded-2xl p-6 animate-on-load animate-fade-slide-up animation-delay-1000 ${animationLoaded ? 'loaded' : ''}`}
+              className={`bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6 animate-on-load animate-fade-slide-up animation-delay-1000 ${animationLoaded ? 'loaded' : ''}`}
             >
-              <div className="text-3xl mb-3" aria-hidden="true">
-                ⏱️
-              </div>
+              <Clock className="w-8 h-8 text-coral-500 mb-3" />
               <h3 className="font-semibold text-gray-900 mb-2">Equal Travel Times</h3>
               <p className="text-sm text-gray-600">
                 Real-time routing calculates actual commutes—not just distance—so everyone's travel
@@ -218,7 +215,7 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="container mx-auto px-4 py-12 border-t border-gray-200">
+      <footer className="container mx-auto px-4 py-12 border-t border-gray-200/50 relative">
         <div className="max-w-2xl mx-auto">
           <nav className="flex flex-wrap justify-center gap-6 text-sm mb-6">
             <Link

@@ -89,12 +89,14 @@ export function AppointmentPicker({
           <Button
             variant="outline"
             className={cn(
-              'w-full justify-start text-left font-normal px-4 py-3.5 h-auto rounded-2xl border-2 border-gray-200 hover:bg-transparent hover:border-gray-300',
+              'w-full justify-start text-left font-normal px-4 py-3.5 h-auto rounded-2xl',
+              'bg-gray-50 border-2 border-transparent',
+              'hover:bg-white hover:border-gray-200',
               !date && 'text-gray-400',
-              'focus:outline-none focus:border-coral-500 focus:ring-4 focus:ring-coral-100'
+              'focus:outline-none focus:border-coral-500 focus:bg-white focus:ring-4 focus:ring-coral-100'
             )}
           >
-            <CalendarIcon className="mr-2 h-5 w-5 text-coral-500" />
+            <CalendarIcon className="mr-2 h-5 w-5 text-gray-400" />
             {date ? format(date, "PPP 'at' p") : <span>{placeholder}</span>}
           </Button>
         </PopoverTrigger>
